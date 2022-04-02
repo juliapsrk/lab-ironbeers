@@ -1,67 +1,57 @@
 const express = require('express');
+
 const hbs = require('hbs');
 const path = require('path');
 const PunkAPIWrapper = require('punkapi-javascript-wrapper');
 
 const app = express();
-const port = 3000;
-
-hbs.registerPartials(path.join(__dirname + '/views/partials'));
-
 const punkAPI = new PunkAPIWrapper();
 
+hbs.registerPartials(path.join(__dirname, 'views/partials'));
+
 app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname + '/views'));
+app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.locals.title = 'Beers for All';
-
 app.get('/', (req, res) => {
-  res.render('index', { home: true });
+  res.render('index');
 });
-app.get('/beers', (req, res) => {
+
+app.get('/beers', (request, response) => {
   punkAPI
     .getBeers()
-    .then(beersFromApi => {
-      const data = beersFromApi;
-      res.render('beers', { beers: true, title: 'Our Selection', data: data });
+    .then(beers => {
+      response.render('beers', { beers: beers });
     })
-    .catch(error => console.error());
+    .catch(error => {
+      console.log(error);
+    });
 });
 
-app.get('/random-beer', (req, res) => {
+app.get('/random-beer', (request, response) => {
   punkAPI
     .getRandom()
-    .then(beersFromApi => {
-      const data = beersFromApi;
-      res.render('random-beer', {
-        randombeer: true,
-        title: 'Beers at Random',
-        data: data
-      });
+    .then(beers => {
+      const beer = beers[0];
+      response.render('random-beer', { beer: beer });
     })
-    .catch(error => console.error());
+    .catch(error => {
+      console.log(error);
+    });
 });
 
-app.get('/beers/:id', (req, res) => {
+app.get('/beers/:id', (request, response) => {
+  const id = request.params.id;
   punkAPI
-    .getBeer(req.params.id)
-    .then(beersFromApi => {
-      const data = beersFromApi;
-      res.render('random-beer', {
-        randombeer: true,
-        title: 'Beer',
-        data: data
-      });
+    .getBeer(id)
+    .then(beers => {
+      const beer = beers[0];
+      response.render('random-beer', { beer: beer });
     })
-    .catch(error => console.error());
+    .catch(error => {
+      console.log(error);
+    });
 });
 
-app.use((req, res) => {
-  res.status(404).render('404', { 404: true, title: '404' });
-});
-
-app.listen(process.env.PORT || port, () =>
-  console.log(`Server is listening on port ${port}!`)
-);
+app.listen(3000, () => console.log('🏃 on port 3000'));
